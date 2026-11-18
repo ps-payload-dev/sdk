@@ -1,0 +1,6 @@
+{
+	// defaults to ps4; swap to prospero.cmake/PS5_PAYLOAD_SDK for ps5
+	"cmake.configureEnvironment": {
+		"CMAKE_TOOLCHAIN_FILE": "${env:PS4_PAYLOAD_SDK}/toolchain/orbis.cmake"
+	}
+}

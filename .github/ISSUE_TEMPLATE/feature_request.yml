@@ -1,0 +1,84 @@
+#   Copyright (C) 2026 ItsJokerZz
+#
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING. If not see
+# <http://www.gnu.org/licenses/>.
+
+name: Feature request
+description: Suggest something new or a change to how the SDK works
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If the change affects more than a few lines of code, please open this issue
+        before you start working on it, so it can be discussed first.
+
+  - type: dropdown
+    id: console
+    attributes:
+      label: Console
+      options:
+        - PS4
+        - PS5
+        - Both
+        - Not console specific
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Building or installing the SDK (make)
+        - Environment (setenv, PS4_PAYLOAD_SDK, PS5_PAYLOAD_SDK)
+        - Compilers and toolchain files (host)
+        - Startup code and kernel access (crt)
+        - libc
+        - SCE libraries (sce_stubs)
+        - Headers (include)
+        - Samples
+        - Documentation
+        - Other or not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The use case behind the request, and what is in the way today.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to see?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Other ways you thought of
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you send it
+      options:
+        - label: I searched the open and closed issues of this repository for the same request
+          required: true

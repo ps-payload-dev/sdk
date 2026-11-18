@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+#   Copyright (C) 2024 John Törnblom
+#   Copyright (C) 2026 ItsJokerZz
+#
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING. If not see
+# <http://www.gnu.org/licenses/>.
+
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+SCRIPT_NAME="$(basename "${SCRIPT_PATH}")"
+SCRIPT_DIR="$(dirname "${SCRIPT_PATH}")"
+
+@PLATFORM_UC@_PAYLOAD_SDK="$(realpath "${SCRIPT_DIR}/..")"
+source "${@PLATFORM_UC@_PAYLOAD_SDK}/toolchain/@PREFIX@.sh"
+
+if [[ -z $1 ]]; then
+    WORKDIR="${@PLATFORM_UC@_SYSROOT}/${@PLATFORM_UC@_HBROOT}"
+else
+    WORKDIR=$1
+fi
+
+WORKDIR="$(realpath "${WORKDIR}")"
+
+#
+# Based on:
+#  https://github.com/gentoo/crossdev/blob/master/wrappers/cross-fix-root
+#
+
+if [ -d "${WORKDIR}/lib" ]; then
+    cd "${WORKDIR}/lib" || exit 1
+    for FILENAME in $(find . -type f -name "lib*.la"); do
+	echo "cross-fix-root: prepending sysroot to libdir in ${FILENAME}"
+	sed -i.bak \
+	    -e "/^libdir=/s:=.*:='${@PLATFORM_UC@_SYSROOT}${@PLATFORM_UC@_HBROOT}/lib':" \
+	    -e "/^dependency_libs=/s: ${@PLATFORM_UC@_HBROOT}/lib/: ${@PLATFORM_UC@_SYSROOT}/${@PLATFORM_UC@_HBROOT}/lib/:g" \
+            "${FILENAME}" || exit 1
+	rm -f "${FILENAME}.bak"
+    done
+fi
+
+if [ -d "${WORKDIR}/bin" ]; then
+    cd "${WORKDIR}/bin" || exit 1
+    for FILENAME in $(find . -type f -name "*-config"); do
+	echo "cross-fix-root: prepending sysroot to prefix in ${FILENAME}"
+	sed -i.bak "/^prefix=/s:=.*:='${@PLATFORM_UC@_SYSROOT}/${@PLATFORM_UC@_HBROOT}':" "${FILENAME}" || exit 1
+	rm -f "${FILENAME}.bak"
+    done
+fi
+

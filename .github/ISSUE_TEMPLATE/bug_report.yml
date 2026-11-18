@@ -1,0 +1,135 @@
+#   Copyright (C) 2026 ItsJokerZz
+#
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING. If not see
+# <http://www.gnu.org/licenses/>.
+
+name: Bug report
+description: Something in the SDK does not build, install, or work as it should
+title: '[Bug]: '
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Please fill in as much as you can,
+        the console and the exact commands help the most.
+
+        Problems in a loader or in a payload that you wrote belong to that project,
+        this is for the SDK in this repository.
+  - type: dropdown
+    id: console
+    attributes:
+      label: Console
+      description: Which console does it happen on?
+      options:
+        - PS4
+        - PS5
+        - Both
+        - Not console specific
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where do you think the problem is?
+      options:
+        - Building or installing the SDK (make)
+        - Environment (setenv, PS4_PAYLOAD_SDK, PS5_PAYLOAD_SDK)
+        - Compilers and toolchain files (host)
+        - Startup code and kernel access (crt)
+        - libc
+        - SCE libraries (sce_stubs)
+        - Headers (include)
+        - Samples
+        - Documentation
+        - Other or not sure
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you do?
+      description: The exact commands, or the steps, that lead to the problem.
+      placeholder: |
+        make ps5 install DESTDIR=~/sdk/ps5
+        make -C samples/shared/hello_world ps5
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+      description: The error messages or output, as text and not as a screenshot.
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you get the SDK?
+      options:
+        - Built from this repository
+        - Release download
+        - Not installed yet, the problem is in building it
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The commit of this repository, or the release, that you use.
+      placeholder: e.g. a commit hash from `git rev-parse --short HEAD`
+  - type: input
+    id: host
+    attributes:
+      label: Your computer
+      description: Operating system and version, and WSL, Git Bash or MSYS2 if you use one of them.
+      placeholder: e.g. Ubuntu 24.04, macOS Sequoia, Windows 11 with WSL2
+    validations:
+      required: true
+  - type: input
+    id: llvm
+    attributes:
+      label: LLVM version
+      description: The output of `llvm-config --version`, if it has to do with building or compiling.
+      placeholder: e.g. 21.1.8
+  - type: input
+    id: firmware
+    attributes:
+      label: Console firmware
+      description: Only if it happens when running on the console.
+      placeholder: e.g. 9.00
+  - type: input
+    id: loader
+    attributes:
+      label: ELF loader
+      description: Only if it happens when running on the console.
+      placeholder: e.g. elfldr
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you send it
+      options:
+        - label: I searched the open and closed issues of this repository for the same problem
+          required: true

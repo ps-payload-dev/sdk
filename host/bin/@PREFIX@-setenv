@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+#   Copyright (C) 2026 ItsJokerZz
+#
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING. If not see
+# <http://www.gnu.org/licenses/>.
+
+# usage: @PREFIX@-setenv [--remove] [--dry-run]
+# export @PLATFORM_UC@_PAYLOAD_SDK for every shell and desktop session of the current user,
+# the SDK is the folder above the one this script is in
+
+NAME=@PLATFORM_UC@_PAYLOAD_SDK
+TAG=@PLATFORM@-payload-sdk
+BEGIN="# >>> ${TAG} >>>"
+END="# <<< ${TAG} <<<"
+
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+SDK="$(cd "$(dirname "${SCRIPT_PATH}")/.." && pwd -P)"
+OS="$(uname -s)"
+CONFIG="${XDG_CONFIG_HOME:-${HOME}/.config}"
+REMOVE=""
+DRY=""
+
+for ARG in "$@"; do
+    case "${ARG}" in
+        --remove) REMOVE=1 ;;
+        --dry-run) DRY=1 ;;
+        *) echo "usage: $(basename "${SCRIPT_PATH}") [--remove] [--dry-run]"; exit 1 ;;
+    esac
+done
+
+# under sudo the variable is for the user who ran it, not for root
+if [[ "$(id -u)" == 0 && -n "${SUDO_USER}" && "${SUDO_USER}" != root ]]; then
+    exec sudo -H -u "${SUDO_USER}" "${SCRIPT_PATH}" "$@"
+fi
+
+sh_quote() { printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"; }
+fish_quote() { printf "'%s'" "$(printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e "s/'/\\\\'/g")"; }
+
+# keep a marked block in a file the user owns, leave the rest of it alone
+set_block() { # file, line
+    local FILE="$1" SRC="$1" OLD="" NEW=""
+    if [[ -f "${FILE}" ]]; then
+        OLD="$(cat "${FILE}")"
+    else
+        [[ -n "${REMOVE}" ]] && return
+        SRC=/dev/null
+    fi
+    NEW="$(LINE="$2" awk -v b="${BEGIN}" -v e="${END}" -v rm="${REMOVE}" '
+        $0 == b { if (!rm) print b "\n" ENVIRON["LINE"] "\n" e; skip = 1; seen = 1; next }
+        $0 == e { skip = 0; next }
+        !skip { print }
+        END { if (!seen && !rm) print b "\n" ENVIRON["LINE"] "\n" e }' "${SRC}")"
+    if [[ "${NEW}" == "${OLD}" ]]; then
+        echo "unchanged ${FILE}"
+    elif [[ -n "${DRY}" ]]; then
+        echo "would update ${FILE}"
+    else
+        mkdir -p "$(dirname "${FILE}")" && printf '%s\n' "${NEW}" > "${FILE}" && echo "updated ${FILE}"
+    fi
+}
+
+# a file that is ours as a whole
+set_file() { # file, content
+    local FILE="$1"
+    if [[ -n "${REMOVE}" ]]; then
+        [[ -e "${FILE}" ]] || return
+        if [[ -n "${DRY}" ]]; then echo "would remove ${FILE}"; else rm -f "${FILE}" && echo "removed ${FILE}"; fi
+    elif [[ -f "${FILE}" && "$(cat "${FILE}")" == "$2" ]]; then
+        echo "unchanged ${FILE}"
+    elif [[ -n "${DRY}" ]]; then
+        echo "would write ${FILE}"
+    else
+        mkdir -p "$(dirname "${FILE}")" && printf '%s\n' "$2" > "${FILE}" && echo "wrote ${FILE}"
+    fi
+}
+
+run() {
+    if [[ -n "${DRY}" ]]; then
+        echo "would run: $*"
+    elif "$@" > /dev/null 2>&1; then
+        echo "ran: $*"
+    else
+        echo "failed: $*"
+    fi
+}
+
+# bash, dash, ksh and the desktop login read .profile, zsh reads .zshenv
+SH_FILES=("${HOME}/.profile")
+for F in .bash_profile .bashrc; do
+    [[ -f "${HOME}/${F}" ]] && SH_FILES+=("${HOME}/${F}")
+done
+if [[ -f "${HOME}/.zshenv" || "${OS}" == Darwin ]] || command -v zsh > /dev/null 2>&1; then
+    SH_FILES+=("${HOME}/.zshenv")
+fi
+for F in "${SH_FILES[@]}"; do
+    set_block "${F}" "export ${NAME}=$(sh_quote "${SDK}")"
+done
+
+if [[ -d "${CONFIG}/fish" ]]; then
+    set_file "${CONFIG}/fish/conf.d/${TAG}.fish" "set -gx ${NAME} $(fish_quote "${SDK}")"
+fi
+
+case "${OS}" in
+    Linux)
+        # sessions managed by systemd do not read .profile
+        if [[ -d /run/systemd/system ]]; then
+            set_file "${CONFIG}/environment.d/60-${TAG}.conf" "${NAME}=${SDK}"
+        fi
+        ;;
+    Darwin)
+        # applications started from the Dock or Spotlight, until the next reboot
+        if [[ -n "${REMOVE}" ]]; then run launchctl unsetenv "${NAME}"; else run launchctl setenv "${NAME}" "${SDK}"; fi
+        ;;
+    MINGW*|MSYS*|CYGWIN*)
+        # Git Bash and friends, the Windows user environment is shared with cmd and PowerShell
+        if [[ -n "${REMOVE}" ]]; then
+            MSYS2_ARG_CONV_EXCL='*' run reg delete 'HKCU\Environment' /v "${NAME}" /f
+        else
+            MSYS2_ARG_CONV_EXCL='*' run setx "${NAME}" "$(cygpath -w "${SDK}")"
+        fi
+        ;;
+esac
+
+if [[ -n "${REMOVE}" ]]; then
+    echo "${NAME} is no longer exported, new terminals will not have it"
+else
+    echo "${NAME} will be ${SDK} in new terminals (log out and in for desktop apps), for this one:"
+    echo "    export ${NAME}=$(sh_quote "${SDK}")"
+fi

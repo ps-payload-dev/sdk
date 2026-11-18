@@ -1,0 +1,72 @@
+#   Copyright (C) 2025 John Törnblom
+#   Copyright (C) 2026 ItsJokerZz
+#
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING. If not see
+# <http://www.gnu.org/licenses/>.
+
+name: macos-latest
+
+on:
+  push:
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.txt"
+  pull_request:
+    paths-ignore:
+      - "**/*.md"
+      - "**/*.txt"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - console: ps4
+            sdk_var: PS4_PAYLOAD_SDK
+          - console: ps5
+            sdk_var: PS5_PAYLOAD_SDK
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Cache downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ps-payload-sdk/downloads
+          key: downloads-${{ runner.os }}-${{ hashFiles('libcxx.sh') }}
+
+      - name: Install prerequisites
+        run: |
+          brew update
+          brew install llvm lld meson cmake
+
+      - name: Set environment
+        run: |
+          echo "DESTDIR=${{ runner.tool_cache }}/${{ matrix.console }}-payload-sdk" >> $GITHUB_ENV
+          echo "${{ matrix.sdk_var }}=${{ runner.tool_cache }}/${{ matrix.console }}-payload-sdk" >> $GITHUB_ENV
+
+      - name: Build SDK
+        run: |
+          make ${{ matrix.console }} install
+          ./libcxx.sh ${{ matrix.console }}
+        env:
+          LLVM_CONFIG: /opt/homebrew/opt/llvm/bin/llvm-config
+
+      - name: Build samples
+        run: make -C samples ${{ matrix.console }}
+        env:
+          LLVM_CONFIG: /opt/homebrew/opt/llvm/bin/llvm-config

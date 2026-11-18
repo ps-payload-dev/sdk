@@ -1,0 +1,129 @@
+/* Copyright (C) 2024 John Törnblom
+   Copyright (C) 2025 John Törnblom
+   Copyright (C) 2026 ItsJokerZz
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 3, or (at your option) any
+later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; see the file COPYING. If not, see
+<http://www.gnu.org/licenses/>.  */
+
+#pragma once
+
+#include <stdint.h>
+
+#if defined(__PROSPERO__)
+#include "payload.h"
+#endif
+
+/**
+ * syscall number definitions.
+ **/
+#define SYS_read 3
+#define SYS_write 4
+#define SYS_open 5
+#define SYS_close 6
+
+#if defined(__ORBIS__)
+#define SYS_kexec 11
+#define SYS_dynlib_dlsym 591
+#define SYS_dynlib_load 594
+#endif
+
+#define SYS_getpid 20
+#define SYS_access 33
+#define SYS_munmap 73
+#define SYS_mprotect 74
+#define SYS_setsockopt 105
+#define SYS_stat 188
+#define SYS_sysctl 202
+#define SYS___getcwd 326
+#define SYS_thr_self 432
+#define SYS_mmap 477
+#define SYS_lseek 478
+#define SYS_mdbg_call 573
+#define SYS_sprx_dlsym 591
+#define SYS_sprx_load 594
+#define SYS_sprx_unload 595
+#define SYS_mdbg_service 601
+#define SYS_randomized_path 602
+#define SYS_thr_get_name 616
+#define SYS_dynlib_get_obj_member 649
+
+#define KERNEL_DLSYM_SYM(handle, sym)                                          \
+  ((sym) = (void *)kernel_dynlib_dlsym(-1, (handle), #sym))
+
+#define KERNEL_DLSYM_3(a, b, c)                                                \
+  _Generic((b),                                                                \
+      char *: ((*(void **)(c) = (void *)kernel_dynlib_dlsym(                   \
+                    -1, (unsigned int)(a), (const char *)(uintptr_t)(b)))      \
+                   ? 0                                                         \
+                   : -1),                                                      \
+      const char *: (                                                          \
+               (*(void **)(c) = (void *)kernel_dynlib_dlsym(                   \
+                    -1, (unsigned int)(a), (const char *)(uintptr_t)(b)))      \
+                   ? 0                                                         \
+                   : -1),                                                      \
+      default: kernel_dynlib_dlsym((int)(a), (unsigned int)(uintptr_t)(b),     \
+                                   (const char *)(uintptr_t)(c)))
+
+#define KERNEL_DLSYM_SELECT(_1, _2, _3, NAME, ...) NAME
+
+#define KERNEL_DLSYM(...)                                                      \
+  KERNEL_DLSYM_SELECT(__VA_ARGS__, KERNEL_DLSYM_3, KERNEL_DLSYM_SYM)           \
+  (__VA_ARGS__)
+
+#if defined(__PROSPERO__)
+/**
+ * Make a syscall.
+ **/
+long __crt_syscall(long sysno, ...);
+
+/**
+ * Initialize the syscall function.
+ **/
+int __crt_syscall_init(payload_args_t *args);
+#else
+static inline long __syscall(long n, ...) {
+  long a1 = 0, a2 = 0, a3 = 0, a4 = 0, a5 = 0, a6 = 0;
+  __builtin_va_list ap;
+  unsigned long ret;
+  char err;
+
+  __builtin_va_start(ap, n);
+  a1 = __builtin_va_arg(ap, long);
+  a2 = __builtin_va_arg(ap, long);
+  a3 = __builtin_va_arg(ap, long);
+  a4 = __builtin_va_arg(ap, long);
+  a5 = __builtin_va_arg(ap, long);
+  a6 = __builtin_va_arg(ap, long);
+  __builtin_va_end(ap);
+
+  register long r10 asm("r10") = a4;
+  register long r8 asm("r8") = a5;
+  register long r9 asm("r9") = a6;
+
+  asm("syscall"
+      : "=a"(ret), "=@ccc"(err), "+r"(r10), "+r"(r8), "+r"(r9)
+      : "a"(n), "D"(a1), "S"(a2), "d"(a3)
+      : "rcx", "r11", "memory");
+
+  return err ? -ret : ret;
+}
+#endif
+
+#if defined(__ORBIS__)
+#define DYNLIB_LOAD(name, handle) __syscall(SYS_dynlib_load, name, 0, handle, 0)
+#define DYNLIB_DLSYM(handle, name, addr)                                       \
+  __syscall(SYS_dynlib_dlsym, handle, name, addr)
+#endif
+
+long ps_syscall(long n, ...);

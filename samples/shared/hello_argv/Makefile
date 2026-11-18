@@ -1,0 +1,33 @@
+#   Copyright (C) 2026 John Törnblom and ItsJokerZz
+#
+# This file is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; see the file COPYING. If not see
+# <http://www.gnu.org/licenses/>.
+
+ELF := hello_argv.elf
+NO_TEST := 1
+
+include $(firstword $(wildcard ../sample.mk ../../sample.mk))
+ifdef PLATFORM
+
+CFLAGS := -Wall -Werror -g
+
+all: $(ELF)
+
+$(ELF): main.c | $(BUILD)
+	$(CC) $(CFLAGS) -o $@ $^
+
+test: $(ELF)
+	curl -T $(ELF) ftp://$(HOST):2121/user/temp/
+	$(DEPLOY) -h $(HOST) -p $(PORT) "file:/user/temp/$(notdir $(ELF))?args=Hello%2C%5C%20world%21"
+endif
