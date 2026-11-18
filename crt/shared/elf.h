@@ -1,4 +1,5 @@
 /* Copyright (C) 2024 John Törnblom
+   Copyright (C) 2026 ItsJokerZz
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -42,6 +43,22 @@ along with this program; see the file COPYING. If not, see
 #define R_X86_64_GLOB_DAT 6
 #define R_X86_64_JMP_SLOT 7
 #define R_X86_64_RELATIVE 8
+
+#ifndef ELFCLASS64
+#define ELFCLASS64 2
+#endif
+
+#ifndef EM_X86_64
+#define EM_X86_64 62
+#endif
+
+#ifndef R_X86_64_NONE
+#define R_X86_64_NONE 0
+#endif
+
+#ifndef SHN_UNDEF
+#define SHN_UNDEF 0
+#endif
 
 #define ET_DYN 3
 
