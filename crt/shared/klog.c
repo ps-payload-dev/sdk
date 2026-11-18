@@ -25,7 +25,8 @@ static char *(*strerror)(int) = 0;
 static int (*vsnprintf)(char *, unsigned long, const char *,
                         __builtin_va_list) = 0;
 
-static int *(*__error)(void) = 0;
+// named as sdk__error to avoid conflict with the libc __error function
+static int *(*sdk__error)(void) = 0;
 
 #define KLOG_BUFSIZE 0x230
 
@@ -82,12 +83,12 @@ int klog_perror(const char *s) {
   char buf[KLOG_BUFSIZE];
   char lbl[32];
 
-  if (!snprintf || !strerror || !__error) {
+  if (!snprintf || !strerror || !sdk__error) {
     return -1;
   }
 
   snprintf(buf, sizeof buf, "<118>[%s] %s: %s\n", klog_label(lbl, sizeof(lbl)),
-           s, strerror(*__error()));
+           s, strerror(*sdk__error()));
 
   return (int)ps_syscall(SYS_mdbg_service, 7, buf, 0);
 }
@@ -104,8 +105,8 @@ int __klog_init(void) {
   if ((err = KERNEL_DLSYM(0x2, "vsnprintf", &vsnprintf))) {
     return err;
   }
-  if ((err = KERNEL_DLSYM(0x2001, "__error", &__error))) {
-    if ((err = KERNEL_DLSYM(0x1, "__error", &__error))) {
+  if ((err = KERNEL_DLSYM(0x2001, "__error", &sdk__error))) {
+    if ((err = KERNEL_DLSYM(0x1, "__error", &sdk__error))) {
       return err;
     }
   }
