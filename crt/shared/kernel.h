@@ -203,11 +203,11 @@ extern unsigned long KERNEL_IMAGE_SIZE;
  * a no-op there, same as before kernel_dynlib_* and kernel_get_proc_thread()
  * moved into shared/kernel.c.
  **/
-extern int *(*sdk__error)(void);
+extern int *(*__error)(void);
 
-#define SET_ERRNO(val)                                                        \
-  if (sdk__error) {                                                              \
-    *sdk__error() = val;                                                        \
+#define SET_ERRNO(val)                                                          \
+  if (__error) {                                                                \
+    *__error() = val;                                                           \
   }
 
 int init_offsets(int fw_version);

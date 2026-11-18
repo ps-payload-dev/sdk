@@ -241,9 +241,9 @@ int __kernel_init(payload_args_t *args) {
   if (!(KERNEL_ADDRESS_IOMMU_SOFTC = kernel_find_iommu_softc())) {
     return -ENOSYS;
   }
-
-  if (!KERNEL_DLSYM(0x1, "__error", sdk__error)) {
-    if (!KERNEL_DLSYM(0x2001, "__error", sdk__error)) {
+  
+  if (!KERNEL_DLSYM(0x1, __error)) {
+    if (!KERNEL_DLSYM(0x2001, __error)) {
       return -1;
     }
   }

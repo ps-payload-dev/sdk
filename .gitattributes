@@ -1,3 +1,16 @@
+
+# Windows command scripts
 *.cmd text eol=crlf
-*.py text eol=lf
+*.bat text eol=crlf
+
+# Unix scripts
 *.sh text eol=lf
+*.py text eol=lf
+
+# Build files
+Makefile text eol=lf
+makefile text eol=lf
+*.mk text eol=lf
+
+# Default text file handling
+* text=auto
