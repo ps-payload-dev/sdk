@@ -42,8 +42,8 @@ along with this program; see the file COPYING. If not, see
 
 #define IN6_PKTINFOSZ 5
 
-// Keep the resolver file-local; the symbol name matches libkernel's API.
-static int *(*__error)(void) = 0;
+// Keep the resolver file-local without colliding with libc's __error symbol.
+static int *(*sdk__error)(void) = 0;
 
 /**
  *
@@ -245,8 +245,8 @@ int __kernel_init(payload_args_t *args) {
     return -ENOSYS;
   }
 
-  if (!KERNEL_DLSYM(0x1, "__error", &__error)) {
-    if (!KERNEL_DLSYM(0x2001, "__error", &__error)) {
+  if (!KERNEL_DLSYM(0x1, "__error", &sdk__error)) {
+    if (!KERNEL_DLSYM(0x2001, "__error", &sdk__error)) {
       return -1;
     }
   }
@@ -255,8 +255,8 @@ int __kernel_init(payload_args_t *args) {
 }
 
 void kernel_set_errno(int val) {
-  if (__error) {
-    *__error() = val;
+  if (sdk__error) {
+    *sdk__error() = val;
   }
 }
 
