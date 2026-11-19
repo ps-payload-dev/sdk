@@ -198,17 +198,11 @@ extern unsigned long KERNEL_IMAGE_SIZE;
 #endif
 
 /**
- * function in libkernel that returns a pointer to errno. Resolved by
- * __kernel_init() on PS5; stays unresolved (NULL) on PS4, so SET_ERRNO is
- * a no-op there, same as before kernel_dynlib_* and kernel_get_proc_thread()
- * moved into shared/kernel.c.
+ * Set the current thread's errno using the platform resolver.
  **/
-extern int *(*sdk__error)(void);
+void kernel_set_errno(int val);
 
-#define SET_ERRNO(val)                                                        \
-  if (sdk__error) {                                                           \
-    *sdk__error() = val;                                                      \
-  }
+#define SET_ERRNO(val) kernel_set_errno(val)
 
 int init_offsets(int fw_version);
 

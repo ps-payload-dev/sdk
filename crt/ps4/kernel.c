@@ -19,6 +19,8 @@ along with this program; see the file COPYING. If not, see
 #include "nid.h"
 #include "syscall.h"
 
+void kernel_set_errno(int val) { (void)val; }
+
 /**
  * Private constants.
  **/
