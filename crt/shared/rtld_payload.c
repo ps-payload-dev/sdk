@@ -257,6 +257,9 @@ static int payload_open(rtld_lib_t *ctx) {
   // apply relocations
   for (int i = 0; i < relasz / sizeof(Elf64_Rela); i++) {
     switch (rela[i].r_info & 0xffffffffl) {
+    case R_X86_64_NONE:
+      break;
+
     case R_X86_64_JMP_SLOT:
       if (r_jmp_slot(lib, &rela[i])) {
         return -1;
@@ -289,6 +292,9 @@ static int payload_open(rtld_lib_t *ctx) {
 
   for (int i = 0; i < pltsz / sizeof(Elf64_Rela); i++) {
     switch (plt[i].r_info & 0xffffffffl) {
+    case R_X86_64_NONE:
+      break;
+
     case R_X86_64_JMP_SLOT:
       if (r_jmp_slot(lib, &plt[i])) {
         return -1;
