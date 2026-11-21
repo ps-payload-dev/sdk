@@ -5,7 +5,7 @@ both consoles. It is modified from the work of [John Törnblom][john]: the
 come from the [PS5SDK][PS5SDK] project.
 
 ELF loaders known to work:
-- PS4: [ps4 elfldr][ps4-elfldr], [remote_lua_loader][remote_lua_loader]
+- PS4: [elfldr][elfldr], [remote_lua_loader][remote_lua_loader]
 - PS5: [elfldr][elfldr], [websrv][websrv], [bdj-ipv6-hen][bdj-ipv6-hen],
   [elfloader][elfloader] via [ps5-jar-loader][ps5-jar-loader],
   [remote_lua_loader][remote_lua_loader]
@@ -39,8 +39,7 @@ $ brew install socat cmake meson python && pip3 install pyelftools # optional
 ```
 
 ## Quick-start
-Download a binary distribution from the latest release of [the PS4 SDK][ps4-rel]
-or [the PS5 SDK][ps5-rel], install it, and set its location (see
+Download a binary distribution from a [release of this SDK][rel], install it, and set its location (see
 [Environment](#environment)):
 ```console
 $ sudo unzip -d /opt/ps-payload-sdk ps4-payload-sdk.zip && sudo mv /opt/ps-payload-sdk/ps4-payload-sdk /opt/ps-payload-sdk/ps4
@@ -146,11 +145,9 @@ Unless a file says otherwise, the rest is GPLv3+.
 [john]: https://github.com/john-tornblom
 [ps4-sdk]: https://github.com/ps4-payload-dev/sdk
 [ps5-sdk]: https://github.com/ps5-payload-dev/sdk
-[ps4-rel]: https://github.com/ps4-payload-dev/sdk/releases/latest
-[ps5-rel]: https://github.com/ps5-payload-dev/sdk/releases/latest
-[ps4-elfldr]: https://github.com/ps4-payload-dev/elfldr
-[elfldr]: https://github.com/ps5-payload-dev/elfldr
-[websrv]: https://github.com/ps5-payload-dev/websrv
+[rel]: https://github.com/ps-payload-dev/sdk/releases
+[elfldr]: https://github.com/ps-payload-dev/elfldr
+[websrv]: https://github.com/ps-payload-dev/websrv
 [bdj-ipv6-hen]: https://github.com/ps5-payload-dev/bdj-ipv6-hen
 [remote_lua_loader]: https://github.com/shahrilnet/remote_lua_loader
 [elfloader]: https://github.com/cryonumb/elfloader
