@@ -26,11 +26,10 @@ int main(void) {
   struct statfs *buf = 0;
   int nitems = 0;
 
-  // a cold MNT_WAIT call has crashed this console; a throwaway MNT_NOWAIT
-  // probe first avoids it
-  getmntinfo(&buf, MNT_NOWAIT);
-
-  if ((nitems = getmntinfo(&buf, MNT_WAIT)) <= 0) {
+  // MNT_WAIT makes the kernel call vfs_statfs on every mount, which panics
+  // ("vfs_statfs is called with NULL mp->mnt_data") on a mount without data.
+  // MNT_NOWAIT returns the cached stats and never calls into the filesystems.
+  if ((nitems = getmntinfo(&buf, MNT_NOWAIT)) <= 0) {
     return EXIT_FAILURE;
   }
 

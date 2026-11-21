@@ -61,6 +61,11 @@ else
         $(error unknown console $(PLATFORM), use ps4 or ps5)
     endif
 
+    # a sample for one console always builds in build, whatever the parent run does
+    ifneq ($(ONLY),)
+        override MULTI :=
+    endif
+
     BUILD := build$(if $(MULTI),/$(PLATFORM))
     ELF   := $(addprefix $(BUILD)/,$(ELF))
     CLEAN ?= $(BUILD)
