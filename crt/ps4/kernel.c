@@ -280,32 +280,64 @@ static int kexec_get_thread(struct thread *td, kexec_args_t *args) {
  **/
 static int kexec_copyin(struct thread *td, kexec_args_t *args) {
   int (*copyin)(const void *, void *, unsigned long) = (void *)args->arg1;
-  const void *uaddr = (void *)args->arg2;
-  void *kaddr = (void *)args->arg3;
+  const unsigned char *uaddr = (void *)args->arg2;
+  volatile unsigned char *kaddr = (void *)args->arg3;
   unsigned long len = args->arg4;
+  unsigned char buf[256];
+  unsigned long flags;
   unsigned long cr0;
   int ret;
 
-  // read cr0
-  asm volatile(".att_syntax\n"
-               "mov %%cr0, %0"
-               : "=r"(cr0));
+  // CR0.WP is per CPU: the window must not fault, sleep or migrate, so the
+  // user data is staged first and the write runs with interrupts disabled
+  while (len) {
+    unsigned long n = len < sizeof(buf) ? len : sizeof(buf);
 
-  // clear cr0 write protection bits
-  asm volatile(".att_syntax\n"
-               "mov %0, %%cr0"
-               :
-               : "r"(cr0 & ~X86_CR0_WP));
+    if ((ret = copyin(uaddr, buf, n))) {
+      return ret;
+    }
 
-  ret = copyin(uaddr, kaddr, len);
+    asm volatile(".att_syntax\n"
+                 "pushfq\n"
+                 "popq %0\n"
+                 "cli"
+                 : "=r"(flags)
+                 :
+                 : "memory");
 
-  // restore cr0
-  asm volatile(".att_syntax\n"
-               "mov %0, %%cr0"
-               :
-               : "r"(cr0));
+    asm volatile(".att_syntax\n"
+                 "mov %%cr0, %0"
+                 : "=r"(cr0));
 
-  return ret;
+    asm volatile(".att_syntax\n"
+                 "mov %0, %%cr0"
+                 :
+                 : "r"(cr0 & ~X86_CR0_WP)
+                 : "memory");
+
+    for (unsigned long i = 0; i < n; i++) {
+      kaddr[i] = buf[i];
+    }
+
+    asm volatile(".att_syntax\n"
+                 "mov %0, %%cr0"
+                 :
+                 : "r"(cr0)
+                 : "memory");
+
+    asm volatile(".att_syntax\n"
+                 "pushq %0\n"
+                 "popfq"
+                 :
+                 : "r"(flags)
+                 : "memory", "cc");
+
+    uaddr += n;
+    kaddr += n;
+    len -= n;
+  }
+
+  return 0;
 }
 
 /**
