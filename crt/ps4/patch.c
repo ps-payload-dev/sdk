@@ -44,6 +44,7 @@ static int patch_mmap(void) {
     patch2 = 0x00395100;
     patch3 = 0x0034B455;
     break;
+  case 0x400:
   case 0x401:
     patch1 = 0x003604C0;
     patch2 = 0x003604D0;
