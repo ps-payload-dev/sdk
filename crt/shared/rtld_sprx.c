@@ -88,8 +88,9 @@ static int sprx_open(rtld_lib_t *ctx) {
 
     if ((sysmod = __rtld_sysmodule_id(lib->soname))) {
       if ((error = sceSysmoduleLoadModuleInternal(sysmod))) {
-        klog_printf("sceSysmoduleLoadModuleInternal: 0x%x\n", error);
-        return -1;
+        klog_printf("sceSysmoduleLoadModuleInternal(%s): 0x%x; loading %s\n",
+                    lib->soname, error, path);
+        error = 0;
       }
     }
 
