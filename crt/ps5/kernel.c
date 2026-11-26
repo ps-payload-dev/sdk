@@ -245,8 +245,8 @@ int __kernel_init(payload_args_t *args) {
     return -ENOSYS;
   }
 
-  if (!KERNEL_DLSYM(0x1, "__error", &sdk__error)) {
-    if (!KERNEL_DLSYM(0x2001, "__error", &sdk__error)) {
+  if (KERNEL_DLSYM(0x1, "__error", &sdk__error)) {
+    if (KERNEL_DLSYM(0x2001, "__error", &sdk__error)) {
       return -1;
     }
   }
